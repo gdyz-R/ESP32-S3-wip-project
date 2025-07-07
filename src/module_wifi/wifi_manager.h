@@ -3,7 +3,7 @@
 #pragma once
 
 #include "esp_wifi.h"
-
+#include "esp_event.h" // 需要包含
 // 定义一个枚举来表示WiFi状态，方便外部调用
 typedef enum {
     WIFI_STATUS_DISCONNECTED,
@@ -11,7 +11,11 @@ typedef enum {
     WIFI_STATUS_CONNECTED,
     WIFI_STATUS_FAILED
 } wifi_status_t;
+// *** 新增：一个专门的初始化函数 ***
+void wifi_manager_init(void);
 
+// *** 新增：声明事件处理器，以便 main.cpp 可以使用它 ***
+void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 /**
  * @brief 初始化Wi-Fi管理器
  * 
@@ -34,3 +38,5 @@ wifi_status_t wifi_get_status(void);
  * 可以在main.cpp中调用此函数进行快速测试。
  */
 void wifi_print_status(void);
+
+void wifi_wait_for_connected();

@@ -7,7 +7,7 @@
 #define MESH_PORT              5555
 
 // --- 外部路由器配置 (只有根节点需要连接) ---
-#define EXTERNAL_ROUTER_SSID "Gionix"
-#define EXTERNAL_ROUTER_PASS "u6t4z9ip"
+#define WIFI_SSID "Gionix"
+#define WIFI_PASSWORD "u6t4z9ip"
 
 #endif // CONFIG_H

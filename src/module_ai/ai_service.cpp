@@ -1,7 +1,7 @@
 // components/ai_service/ai_service.cpp
 
 #include "ai_service.h"
-#include "wifi_manager.h" // 包含您提供的WiFi模块头文件
+#include "../module_wifi/wifi_manager.h" // 包含您提供的WiFi模块头文件
 
 #include <string>
 #include "esp_log.h"

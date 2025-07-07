@@ -2,7 +2,7 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 #include <ArduinoJson.h>
-
+#include <cmath> 
 // --- 配置 ---
 #define MQTT_BROKER_URL "mqtt://47.122.130.135:1883"
 #define MQTT_USERNAME   "test"
