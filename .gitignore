@@ -18,7 +18,7 @@ components/
 *.s
 
 # VS Code User-specific settings (usually safe to ignore)
-.vscode/settings.json
+.vscode/
 .vscode/*.code-workspace
 
 # Arduino IDE generated files
