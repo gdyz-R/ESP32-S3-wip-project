@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+#include "module_wifi/wifi_manager.h" // 引入我们的Wi-Fi模块
+// 定义硬件引脚
+#define BLINK_GPIO 2
+#define BUTTON_GPIO 15
+
+// 任务函数原型声明
+void event_queue_init();
+void event_dispatcher_task(void* pvParameters);
+void wifi_status_test_task(void* pvParameters);
+void blinky_task(void *pvParameter);
+void button_task(void *pvParameter);
+// 一个简单的测试任务
+void wifi_status_test_task(void* pvParameters) {
+    for(;;) {
+        wifi_print_status(); // 调用我们的测试函数
+        vTaskDelay(pdMS_TO_TICKS(5000)); // 每5秒打印一次
+    }
+}
+extern "C" void app_main(void); // 在C++文件中，需要这样声明C风格的app_main
+
+void app_main(void)
+{
+       // 1. 初始化事件队列
+    event_queue_init();
+    // 2. 初始化Wi-Fi
+    #ifdef USE_WIFI_MANAGER
+    wifi_init_sta(); // ★ 在这里调用Wi-Fi初始化函数
+    #endif
+     // 3. 启动事件分发任务
+    xTaskCreate(event_dispatcher_task, "Event Dispatcher", 4096, NULL, 10, NULL);
+    
+    // 4. (可选) 启动Wi-Fi状态测试任务
+    xTaskCreate(wifi_status_test_task, "WiFi Status Test", 2048, NULL, 3, NULL);
+
+    printf("系统框架初始化完成。\n");
+    // --- 使用结构体配置LED引脚 ---
+    gpio_config_t io_conf_led;
+    io_conf_led.intr_type = GPIO_INTR_DISABLE;      // 关闭中断
+    io_conf_led.mode = GPIO_MODE_OUTPUT;            // 设置为输出模式
+    io_conf_led.pin_bit_mask = (1ULL << BLINK_GPIO); // 使用位掩码指定引脚
+    io_conf_led.pull_down_en = GPIO_PULLDOWN_DISABLE; // 关闭下拉
+    io_conf_led.pull_up_en = GPIO_PULLUP_DISABLE;   // 关闭上拉
+    gpio_config(&io_conf_led);                      // 调用配置函数
+
+    // --- 使用结构体配置按键引脚 ---
+    gpio_config_t io_conf_button;
+    io_conf_button.intr_type = GPIO_INTR_DISABLE;
+    io_conf_button.mode = GPIO_MODE_INPUT;
+    io_conf_button.pin_bit_mask = (1ULL << BUTTON_GPIO);
+    io_conf_button.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf_button.pull_up_en = GPIO_PULLUP_ENABLE;  // 启用上拉
+    gpio_config(&io_conf_button);
+
+    printf("硬件配置完成 (使用 gpio_config)。\n");
+
+    // --- 创建并启动任务 (这部分和之前一样) ---
+    xTaskCreate(blinky_task, "Blinky Task", 2048, NULL, 5, NULL);
+    xTaskCreate(button_task, "Button Task", 2048, NULL, 5, NULL);
+
+    printf("RTOS 任务已启动。\n");
+}
+
+void blinky_task(void *pvParameter)
+{
+    int level = 0;
+    for (;;)
+    {
+        level = !level;
+        // 注意这里的类型转换 (gpio_num_t)
+        gpio_set_level((gpio_num_t)BLINK_GPIO, level);
+        printf("Blinky Task: LED is %s\n", level ? "ON" : "OFF");
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+void button_task(void *pvParameter)
+{
+    int last_button_state = 1;
+    for (;;)
+    {
+        // 注意这里的类型转换 (gpio_num_t)
+        int current_button_state = gpio_get_level((gpio_num_t)BUTTON_GPIO);
+        if (last_button_state == 1 && current_button_state == 0)
+        {
+            printf("----------------------------------\n");
+            printf("Button Task: 按键被按下了!\n");
+            printf("----------------------------------\n");
+        }
+        last_button_state = current_button_state;
+        vTaskDelay(pdMS_TO_TICKS(20));
+    }
+}

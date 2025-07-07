@@ -1,0 +1,47 @@
+# PlatformIO build environments and cache
+.pio/
+.vscode/.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/pylint.json # sometimes auto-generated
+components/
+# Build artifacts
+.bin/
+*.bin
+*.elf
+*.hex
+*.map
+*.o
+*.obj
+*.d
+*.i
+*.s
+
+# VS Code User-specific settings (usually safe to ignore)
+.vscode/settings.json
+.vscode/*.code-workspace
+
+# Arduino IDE generated files
+*.ino.hex
+*.ino.bin
+*.ino.elf
+*.ino.map
+*.ino.lst
+*.arduino.json
+
+# Log files
+*.log
+
+# Dependency directories
+# vendor/ # if you have a vendor folder for third-party libs
+# node_modules/ # if you're using Node.js tools
+
+# Operating System generated files
+.DS_Store # macOS
+Thumbs.db # Windows
+desktop.ini # Windows
+
+# Sensitive configuration files (if they contain secrets like WiFi passwords)
+# Be very careful if these are already committed!
+# secrets.h
+# config_secrets.h
