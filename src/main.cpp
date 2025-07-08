@@ -14,7 +14,8 @@
 #include "mqtt_manager.h"     // 你提供的MQTT模块
 #include "espnow_manager/espnow_manager.h"   // 我们刚创建的ESPNOW模块
 #include "../esp_now_data.h"     // 共享的契约文件
-
+#include "esp_sntp.h"
+#include <time.h> // 确保 time.h 被包含
 static const char *TAG = "MAIN_APP";
 static const std::string DEVICE_ID = "central_hub_01"; // 主设备的ID
 
@@ -22,6 +23,34 @@ static const std::string DEVICE_ID = "central_hub_01"; // 主设备的ID
 
 static AggregatedData aggregated_data;
 // 用于存储所有传感器数据的全局变量
+// =========================================================================
+// 新增：SNTP 时间同步相关的代码
+// =========================================================================
+static void time_sync_notification_cb(struct timeval *tv) {
+    ESP_LOGI(TAG, "NTP Time synchronized!");
+    // (可选) 你可以在这里设置一个标志，表示时间已同步
+}
+
+static void initialize_sntp(void) {
+    ESP_LOGI(TAG, "Initializing SNTP");
+    // 设置 SNTP 工作模式为轮询
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    // 设置 NTP 服务器地址，可以使用国内的服务器以获得更快的响应
+    esp_sntp_setservername(0, "ntp.aliyun.com"); // 阿里云NTP服务器
+    esp_sntp_setservername(1, "cn.pool.ntp.org");  // 中国NTP池
+    esp_sntp_setservername(2, "edu.ntp.org.cn");   // 教育网NTP
+    
+    // 设置时间同步完成后的回调函数
+    sntp_set_time_sync_notification_cb(time_sync_notification_cb);
+    
+    // 初始化 SNTP
+    esp_sntp_init();
+
+    // 设置本地时区为中国标准时间 (CST-8)
+    setenv("TZ", "CST-8", 1);
+    tzset();
+    ESP_LOGI(TAG, "Timezone set to CST-8");
+}
 
 
 // =========================================================================
@@ -57,9 +86,9 @@ void handle_espnow_data(const uint8_t* mac_addr, const esp_now_message_t& msg) {
     // 数据更新后，立即调用 MQTT 发布函数
     // 获取当前时间戳 (需要 time.h 和 sntp/time_sync 的支持)
     // 这里为了简单，我们先用一个伪时间戳
-    time_t now;
-    time(&now);
-    uint64_t timestamp = (uint64_t)now * 1000;
+    struct timeval tv_now;
+    gettimeofday(&tv_now, NULL); // 使用 gettimeofday 获取更精确的时间（秒+微秒）
+    uint64_t timestamp = (uint64_t)tv_now.tv_sec * 1000 + (uint64_t)tv_now.tv_usec / 1000;
 
     if (mqtt_is_connected()) {
         mqtt_publish_aggregated_data(DEVICE_ID, aggregated_data, timestamp);
@@ -134,7 +163,7 @@ extern "C" void app_main(void) {
     // ================== 6. 等待连接并启动上层应用 ==================
     // 等待 WiFi 连接成功 (这个函数需要你的 wifi_manager 提供)
     wifi_wait_for_connected();
-
+        initialize_sntp();
     ESP_LOGI(TAG, "Initializing MQTT Client...");
     mqtt_app_start();
     vTaskDelay(2000 / portTICK_PERIOD_MS);
