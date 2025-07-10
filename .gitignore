@@ -1,8 +1,10 @@
 # PlatformIO build environments and cache
 .pio/
+.lib/
 .vscode/.pio/
 .pioenvs/
 .piolibdeps/
+.managed_components/
 .vscode/pylint.json # sometimes auto-generated
 components/
 # Build artifacts
